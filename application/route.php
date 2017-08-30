@@ -9,6 +9,10 @@
 // | Author: liu21st <liu21st@gmail.com>
 // +----------------------------------------------------------------------
 
+use think\Route;
+
+Route::rule("admin/",'app/member/admin');
+
 return [
     '__pattern__' => [
         'name' => '\w+',

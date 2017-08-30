@@ -7,12 +7,16 @@ use think\Cookie;
 
 class Member extends BaseController
 {
-    private static $ADMIN_FILE_PATH = APP_PATH."AdminUserId.txt";
+    private static $ADMIN_FILE_PATH = APP_PATH . "AdminUserId.txt";
     private static $COOKIE_KEY_NAME = 'wQ4c_e043_lastcheckfeed';
 
     public function index()
     {
         return view("/index");
+    }
+
+    public function admin(){
+        return view("/admin/index");
     }
 
     public function getAll()
@@ -32,13 +36,29 @@ class Member extends BaseController
         return $this->buildSuccessResult(MemberDO::queryByPagination($requestPage, $pageSize));
     }
 
-    public function search(){
+    public function search()
+    {
         $keyword = input('keyword');
-        if ($keyword==null){
+        if ($keyword == null) {
             return $this->buildErrorResult('keyword can not be null');
         }
-        $this->recordLog('search() methods called searchKeyword='.$keyword);
+        $this->recordLog('search() methods called searchKeyword=' . $keyword);
         return $this->buildSuccessResult(MemberDO::searchMember($keyword));
+    }
+
+    public function checkUser()
+    {
+        $this->recordLog('checkUser() methods called');
+        $userId = $this->getDiscuzLoggedUser();
+        if ($userId != '') {
+            if ($this->validateUserPrivilege($userId)){
+                return $this->buildSuccessResult(['state' => 'Allow']);
+            } else {
+                return $this->buildSuccessResult(['state' => 'Denied']);
+            }
+        } else {
+            return $this->buildSuccessResult(['state' => 'Unauthorized']);
+        }
     }
 
     private function getDiscuzLoggedUser()
@@ -48,7 +68,7 @@ class Member extends BaseController
             $userId = explode("|", $bbsCookie)[0];
             return $userId;
         } else {
-            return "";
+            return '';
         }
     }
 
@@ -57,11 +77,11 @@ class Member extends BaseController
         if (!file_exists(self::$ADMIN_FILE_PATH)) {
             return false;
         }
-        $fp = fopen(self::$ADMIN_FILE_PATH,"r");
+        $fp = fopen(self::$ADMIN_FILE_PATH, "r");
         $content = fread($fp, filesize(self::$ADMIN_FILE_PATH));
         $adminList = explode(",", $content);
         fclose($fp);
-        return in_array($userId,$adminList);
+        return in_array($userId, $adminList);
     }
 
 
