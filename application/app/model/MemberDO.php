@@ -46,4 +46,10 @@ class MemberDO extends Model
             'data' => $dataList
         ];
     }
+
+    public static function insertMember($data){
+        Db::table(self::$tableName)->insert($data);
+    }
+
+
 }

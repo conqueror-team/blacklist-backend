@@ -3,7 +3,10 @@
 namespace app\app\controller;
 
 use app\app\model\MemberDO;
+use app\app\utils\COSUtils;
 use think\Cookie;
+use think\Loader;
+use QCloud\Cos\Api;
 
 class Member extends BaseController
 {
@@ -15,7 +18,8 @@ class Member extends BaseController
         return view("/index");
     }
 
-    public function admin(){
+    public function admin()
+    {
         return view("/admin/index");
     }
 
@@ -51,7 +55,7 @@ class Member extends BaseController
         $this->recordLog('checkUser() methods called');
         $userId = $this->getDiscuzLoggedUser();
         if ($userId != '') {
-            if ($this->validateUserPrivilege($userId)){
+            if ($this->validateUserPrivilege($userId)) {
                 return $this->buildSuccessResult(['state' => 'Allow']);
             } else {
                 return $this->buildSuccessResult(['state' => 'Denied']);
@@ -59,6 +63,62 @@ class Member extends BaseController
         } else {
             return $this->buildSuccessResult(['state' => 'Unauthorized']);
         }
+    }
+
+    public function test()
+    {
+        $cosUtils = new COSUtils('conqueror');
+        $ret = $cosUtils->uploadFile(ROOT_PATH . 'public' . DS . 'uploads' . DS . '20170831' . DS . '4f6449ccfbad456881c9a18c9ce5b086.jpg',
+            '/blacklist/1.jpg');
+
+    }
+
+    public function submit()
+    {
+        $name = input('post.name', null);
+        $comment = input('post.comment', null);
+        $area = input('post.area', null);
+        if ($name == null) {
+            return $this->buildErrorResult('name can not be null');
+        } elseif ($comment == null) {
+            return $this->buildErrorResult('comment can not be null');
+        } elseif ($area == null) {
+            return $this->buildErrorResult('area can not be null');
+        }
+        $lastData = ['name' => $name,
+            'comment' => $comment,
+            'area' => $area];
+        $this->recordLog('submit() methods called.name=' . $name . 'comment=.' . $comment . 'area=' . $area);
+        $privilege = $this->checkUser()->getData();
+        if ($privilege['result']['state'] != 'Allow') {
+            return $this->buildErrorResult('access denied');
+        }
+        $file = request()->file('image');
+//         移动到框架应用根目录/public/uploads/ 目录下
+        if ($file != null) {
+            $info = $file->rule('unique')->move(ROOT_PATH . 'public' . DS . 'uploads' . DS);
+            if ($info) {
+//                echo $info->getExtension();
+//                echo $info->getFilename();
+                $cosUtil = new COSUtils('conqueror');
+                $ret = $cosUtil->uploadFile(ROOT_PATH . 'public' . DS . 'uploads' . DS . $info->getSaveName(),
+                    '/blacklist/' . $info->getFilename());
+                if ($ret) {
+                    $lastData['picture'] = $ret;
+                    //删除服务器目录的临时文件
+                    unlink(ROOT_PATH . 'public' . DS . 'uploads' . DS . $info->getSaveName());
+                } else {
+                    $this->recordLog('upload COS File failed!'.'tempFilePath='.$info->getSaveName());
+                    return $this->buildErrorResult('upload COS File failed');
+                }
+            } else {
+                // 上传失败获取错误信息
+                $this->recordLog('upload File failed!error=' . $file->getError());
+                return $this->buildErrorResult('upload File failed');
+            }
+        }
+        MemberDO::insertMember($lastData);
+        return $this->buildSuccessResult('');
     }
 
     private function getDiscuzLoggedUser()
