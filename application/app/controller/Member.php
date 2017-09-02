@@ -7,6 +7,7 @@ use app\app\utils\COSUtils;
 use think\Cookie;
 use think\Loader;
 use QCloud\Cos\Api;
+use think\View;
 
 class Member extends BaseController
 {
@@ -21,6 +22,17 @@ class Member extends BaseController
     public function admin()
     {
         return view("/admin/index");
+    }
+
+    public function showImage(){
+        $href = input('href','');
+        if ($href==''){
+            $this->redirect('app/member/index');
+            return;
+        }
+        $view = new View();
+        $view->assign('href',$href);
+        return $view->fetch('/showImage');
     }
 
     public function getAll()
@@ -65,13 +77,13 @@ class Member extends BaseController
         }
     }
 
-    public function test()
-    {
-        $cosUtils = new COSUtils('conqueror');
-        $ret = $cosUtils->uploadFile(ROOT_PATH . 'public' . DS . 'uploads' . DS . '20170831' . DS . '4f6449ccfbad456881c9a18c9ce5b086.jpg',
-            '/blacklist/1.jpg');
-
-    }
+//    public function test()
+//    {
+//        $cosUtils = new COSUtils('conqueror');
+//        $ret = $cosUtils->uploadFile(ROOT_PATH . 'public' . DS . 'uploads' . DS . '20170831' . DS . '4f6449ccfbad456881c9a18c9ce5b086.jpg',
+//            '/blacklist/1.jpg');
+//
+//    }
 
     public function submit()
     {
@@ -87,7 +99,8 @@ class Member extends BaseController
         }
         $lastData = ['name' => $name,
             'comment' => $comment,
-            'area' => $area];
+            'area' => $area,
+            'create_time' => time()];
         $this->recordLog('submit() methods called.name=' . $name . 'comment=.' . $comment . 'area=' . $area);
         $privilege = $this->checkUser()->getData();
         if ($privilege['result']['state'] != 'Allow') {

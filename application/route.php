@@ -12,6 +12,8 @@
 use think\Route;
 
 Route::rule("admin/",'app/member/admin');
+Route::rule("showImage/",'app/member/showImage');
+
 
 return [
     '__pattern__' => [
