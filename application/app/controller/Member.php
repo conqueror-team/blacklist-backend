@@ -24,14 +24,15 @@ class Member extends BaseController
         return view("/admin/index");
     }
 
-    public function showImage(){
-        $href = input('href','');
-        if ($href==''){
+    public function showImage()
+    {
+        $href = input('href', '');
+        if ($href == '') {
             $this->redirect('app/member/index');
             return;
         }
         $view = new View();
-        $view->assign('href',$href);
+        $view->assign('href', $href);
         return $view->fetch('/showImage');
     }
 
@@ -121,7 +122,7 @@ class Member extends BaseController
                     //删除服务器目录的临时文件
                     unlink(ROOT_PATH . 'public' . DS . 'uploads' . DS . $info->getSaveName());
                 } else {
-                    $this->recordLog('upload COS File failed!'.'tempFilePath='.$info->getSaveName());
+                    $this->recordLog('upload COS File failed!' . 'tempFilePath=' . $info->getSaveName());
                     return $this->buildErrorResult('upload COS File failed');
                 }
             } else {
@@ -154,7 +155,12 @@ class Member extends BaseController
         $content = fread($fp, filesize(self::$ADMIN_FILE_PATH));
         $adminList = explode(",", $content);
         fclose($fp);
-        return in_array($userId, $adminList);
+        for ($i = 0; $i < count($adminList); $i++) {
+            if ($userId == $adminList[$i]) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
