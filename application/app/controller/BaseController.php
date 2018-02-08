@@ -11,9 +11,18 @@ namespace app\app\controller;
 
 use think\Controller;
 use think\Log;
+use think\Request;
 
 class BaseController extends Controller
 {
+
+    public function __construct(Request $request = null)
+    {
+        parent::__construct($request);
+        header('Server:nginx');
+        header('X-Powered-By:Conqueror');
+    }
+
     protected function recordLog($message)
     {
         Log::record($message, 'info');
